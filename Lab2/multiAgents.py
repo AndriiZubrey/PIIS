@@ -75,7 +75,50 @@ class ReflexAgent(Agent):
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
         "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        
+        # aka Score
+        evalNum = 0
+
+        # Ghost eval
+        listOfGhostDist = []
+        closestGhost = 0
+        for ghost in range(len(newGhostStates)): # range(len()) for indexation
+            ghostPos = successorGameState.getGhostPositions()[ghost] # indexation of ghosts
+            listOfGhostDist.append(manhattanDistance(newPos, ghostPos))
+        if listOfGhostDist != []:
+            closestGhost = min(listOfGhostDist) # min distance
+        
+        # Food eval
+        listOfFoodDist = []
+        closestFood = 0
+        for food in newFood.asList():
+            listOfFoodDist.append(manhattanDistance(newPos, food))
+        if listOfFoodDist != []:
+            closestFood = min(listOfFoodDist) # min distance
+
+        # Capsule eval
+        capsules = currentGameState.getCapsules()
+        listOfCapsDist = []
+        closestCapsule = 0
+        for capsule in capsules:
+            listOfCapsDist.append(manhattanDistance(newPos, capsule))
+        if listOfCapsDist != []:
+            closestCapsule = min(listOfCapsDist) # min distance
+
+        # Eval calc
+        closestScaredGhostIndex = listOfGhostDist.index(closestGhost)
+        foodCost = (1/(closestFood + 1)) + (1/(len(listOfFoodDist) + 1)) # min distance + count (less dots - higher score) conv to <1
+        capsuleCost = (1/(closestCapsule + 1)) + (1/(len(listOfCapsDist) + 1)) # same
+        ghostCost = (1/(closestGhost + 1)) # min distance conv to <1
+        if closestGhost>1:
+            evalNum += foodCost + capsuleCost + successorGameState.getScore()
+            if newScaredTimes[closestScaredGhostIndex]>1: # if scared --> + ghost cost
+                evalNum += ghostCost
+            else: # else --> - ghost cost
+                evalNum += -ghostCost
+        else:
+            evalNum = -1 # if too close -- run away
+        return evalNum
 
 def scoreEvaluationFunction(currentGameState: GameState):
     """
